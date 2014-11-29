@@ -4,13 +4,13 @@
 HttpServer::HttpServer(QObject * parent)
 	:	server(parent)
 {
-	connect(this, &HttpServer::newConnection, this, &HttpServer::makeConnection);
+	connect(&server, &QTcpServer::newConnection, this, &HttpServer::makeConnection);
 	connect(this, &HttpServer::closeSignal, this, &HttpServer::closeConnection);
 }
 
 void HttpServer::makeConnection()
 {
-	Socket * socket = new Socket(this->nextPendingConnection());
+	Socket * socket = new Socket(nextPendingConnection());
 	sockets.append(socket);
 	connect(socket, &Socket::readyRead, this, &HttpServer::readData);
 }
@@ -20,7 +20,7 @@ void HttpServer::sendHead(Socket * socket, int size)
 	QString buffer = "HTTP/1.1 200 OK\r\nServer: Platforma v.01\r\nContent-Length: 623\r\nContent-Type: text/html\r\n\r\n"; //TODO: QString::arg()
 	emit debug(buffer);
 
-	socket->socket->write(buffer.toLocal8Bit());
+	socket->write(buffer.toLocal8Bit());
 
 	emit debug("My answer:\n");
 	emit debug(buffer);
@@ -39,10 +39,10 @@ void HttpServer::readData(Socket * socket)
 	QString file = data->readAll();
 
 	emit debug("Clients request:");
-	n = socket->socket->readLine(buffer, BUFFER);
+	n = socket->readLine(buffer, BUFFER);
 	sscanf(buffer, "%s %s %s", cmd, path, vers); //TODO CFiend QRegularExpression
 	emit debug(buffer);
-	while ((n = socket->socket->readLine(buffer, BUFFER)) > 0) {
+	while ((n = socket->readLine(buffer, BUFFER)) > 0) {
 		if (n == 2 && buffer[0] == '\r' && buffer[1] == '\n')
 			break;
 		emit debug(buffer);
@@ -68,4 +68,24 @@ void HttpServer::sendData(Socket * socket, const QString &path)
 void HttpServer::closeConnection(Socket * socket)
 {
 	socket->close();
+}
+
+QTcpSocket* HttpServer::nextPendingConnection()
+{
+	return server.nextPendingConnection();
+}
+
+bool HttpServer::isListening()
+{
+	return server.isListening();
+}
+
+bool HttpServer::listen(const QHostAddress & address = QHostAddress::Any, quint16 port = 0)
+{
+	return server.listen(address, port);
+}
+
+void HttpServer::close()
+{
+	server.close();
 }

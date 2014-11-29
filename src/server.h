@@ -4,7 +4,7 @@
 #include <QtNetwork>
 #include "socket.h"
 
-class HttpServer
+class HttpServer : public QObject
 {
 
 	Q_OBJECT;
@@ -18,6 +18,10 @@ signals:
 	void debug(const QString &msg);
 	void closeSignal(Socket * socket);
 public:
+	void close();
+	bool isListening();
+	bool listen(const QHostAddress & address, quint16 port);
+	QTcpSocket* nextPendingConnection();
 	void makeConnection();
 	void closeConnection(Socket * socket);
 	void sendHead(Socket * socket, int size);

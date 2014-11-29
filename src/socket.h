@@ -9,10 +9,12 @@ class Socket : public QObject
 
 private:
 	QTcpSocket * socket;
-	Socket(QTcpSocket * socket);
 public:
+	Socket(QTcpSocket * socket);
 	void close();
 	qint64 write(const QByteArray &mssg);
+	QByteArray readLine(qint64 maxSize);
+	qint64 readLine(char * data, qint64 maxSize);
 signals:
 	void readyRead(Socket * socket);
 };

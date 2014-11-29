@@ -8,6 +8,8 @@ MainWindow::MainWindow(QWidget * parent = nullptr, Qt::WindowFlags flags = 0)
 	QWidget * centralWidget = new QWidget(this);
 	QHBoxLayout * mainLay = new QHBoxLayout(centralWidget);
 
+	QAction * startAction, * stopAction, * quitAction;
+
 	for (auto x : std::initializer_list <std::tuple <QAction **, const QString &, const QKeySequence &, std::function <void()> > > {
 			{&startAction, "&Start", Qt::CTRL + Qt::Key_N, &MainWindow::newServer},
 			{&stopAction, "S&top", Qt::CTRL + Qt::Key_C, &MainWindow::closeServer},
@@ -16,25 +18,11 @@ MainWindow::MainWindow(QWidget * parent = nullptr, Qt::WindowFlags flags = 0)
 			QAction **a = std::get<0>(x);
 			*a = new QAction(std::get<1>(x), this);
 			connect(*a, &QAction::triggered, this, std::get<3>(x));
-			*a->setShortcut(std::get<2>(x));
+			(*a)->setShortcut(std::get<2>(x));
+			fileMenu->addAction(*a);
 		}
 
-// 	QAction * startAction = new QAction("&Start", this);
-// 	connect(startAction, &QAction::triggered, this, &MainWindow::newServer);
-// 	startAction->setShortcut(Qt::CTRL + Qt::Key_N);
-
-// 	QAction * stopAction = new QAction("S&top", this);
-// 	connect(stopAction, &QAction::triggered, this, &MainWindow::closeServer);
-// 	stopAction->setShortcut(Qt::CTRL + Qt::Key_C);
-
-// 	QAction * quitAction = new QAction("&Quit", this);
-// 	connect(quitAction, &QAction::triggered, this, &MainWindow::closeWindow);
-// 	quitAction->setShortcut(Qt::CTRL + Qt::Key_Q);
-
 	connect(&server, &HttpServer::debug, this, &MainWindow::debug);
-
-	for (QAction * action : {startAction, stopAction, quitAction})
-		fileMenu->addAction(action);
 
 	debugWin.setReadOnly(true);
 	QColor green(50, 200, 50);
@@ -44,7 +32,7 @@ MainWindow::MainWindow(QWidget * parent = nullptr, Qt::WindowFlags flags = 0)
 
 	debugWin.setText("Server HTTP ver.0.01\n\n");
 
-	mainLay->addWidget(debugWin);
+	mainLay->addWidget(&debugWin);
 	centralWidget->setLayout(mainLay);
 	setCentralWidget(centralWidget);
 }
