@@ -12,5 +12,4 @@ set (Platform_HDRS
 
 qt5_wrap_cpp (Platform_SRCS ${Platform_HDRS})
 add_executable (platforma ${Platform_SRCS})
-target_link_libraries (platforma ${QtWidgets_LIBRARIES} ${Qt5Network_LIBRARIES})
-
+target_link_libraries (platforma ${Qt5Widgets_LIBRARIES} ${Qt5Network_LIBRARIES})

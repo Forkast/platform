@@ -9,7 +9,7 @@ include_directories (${Qt5Widgets_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${Pla
 set (Platform_SRCS src/main.cpp src/server.cpp src/socket.cpp src/window.cpp)
 set (Platform_HDRS src/server.h src/socket.h src/window.h)
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${Platofm_BINARY_DIR}/bin")
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${Platform_BINARY_DIR}/bin")
 
 add_subdirectory (src)
 

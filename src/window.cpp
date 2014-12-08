@@ -1,24 +1,35 @@
 #include "window.h"
 
-MainWindow::MainWindow(QWidget * parent = nullptr, Qt::WindowFlags flags = 0)
+MainWindow::MainWindow(QWidget *parent = nullptr, Qt::WindowFlags flags = 0)
 	: QMainWindow(parent, flags), server(parent)
 {
-	QMenu * fileMenu = menuBar()->addMenu("&File");
+	QMenu *fileMenu = menuBar()->addMenu("&File");
 
-	QWidget * centralWidget = new QWidget(this);
-	QHBoxLayout * mainLay = new QHBoxLayout(centralWidget);
+	QWidget *centralWidget = new QWidget(this);
+	QHBoxLayout *mainLay = new QHBoxLayout(centralWidget);
 
-	QAction * startAction, * stopAction, * quitAction;
+	QAction *startAction = nullptr, *stopAction = nullptr, *quitAction = nullptr;
+	qDebug() << (quint64)startAction;
 
-	for (auto x : std::initializer_list <std::tuple <QAction **, const QString &, const QKeySequence &, std::function <void()> > > {
-			{&startAction, "&Start", Qt::CTRL + Qt::Key_N, &MainWindow::newServer},
-			{&stopAction, "S&top", Qt::CTRL + Qt::Key_C, &MainWindow::closeServer},
-			{&quitAction, "&Quit", Qt::CTRL + Qt::Key_Q, &MainWindow::closeWindow},
+	struct ActionDescriptor
+	{
+		QAction **act;
+		const QString str;
+		const QKeySequence key;
+		void (MainWindow::*fun)();
+	};
+
+	for (const auto &x : std::initializer_list <ActionDescriptor> {
+			{&startAction, QString("&Start"), QKeySequence(Qt::CTRL + Qt::Key_N), &MainWindow::newServer},
+			{&stopAction, QString("S&top"), QKeySequence(Qt::CTRL + Qt::Key_C), &MainWindow::closeServer},
+			{&quitAction, QString("&Quit"), QKeySequence(Qt::CTRL + Qt::Key_Q), &MainWindow::closeWindow},
 		}) {
-			QAction **a = std::get<0>(x);
-			*a = new QAction(std::get<1>(x), this);
-			connect(*a, &QAction::triggered, this, std::get<3>(x));
-			(*a)->setShortcut(std::get<2>(x));
+			QAction **a = x.act;
+			qDebug() << a << (quint64)*a;	
+			*a = new QAction(x.str, this);
+			qDebug() << (quint64)*a;
+			connect(*a, &QAction::triggered, this, x.fun);
+			(*a)->setShortcut(x.key);
 			fileMenu->addAction(*a);
 		}
 
