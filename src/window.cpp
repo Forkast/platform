@@ -9,7 +9,6 @@ MainWindow::MainWindow(QWidget *parent = nullptr, Qt::WindowFlags flags = 0)
 	QHBoxLayout *mainLay = new QHBoxLayout(centralWidget);
 
 	QAction *startAction = nullptr, *stopAction = nullptr, *quitAction = nullptr;
-	qDebug() << (quint64)startAction;
 
 	struct ActionDescriptor
 	{
@@ -25,9 +24,7 @@ MainWindow::MainWindow(QWidget *parent = nullptr, Qt::WindowFlags flags = 0)
 			{&quitAction, QString("&Quit"), QKeySequence(Qt::CTRL + Qt::Key_Q), &MainWindow::closeWindow},
 		}) {
 			QAction **a = x.act;
-			qDebug() << a << (quint64)*a;	
 			*a = new QAction(x.str, this);
-			qDebug() << (quint64)*a;
 			connect(*a, &QAction::triggered, this, x.fun);
 			(*a)->setShortcut(x.key);
 			fileMenu->addAction(*a);

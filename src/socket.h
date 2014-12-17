@@ -7,14 +7,19 @@ class Socket : public QObject
 
 	Q_OBJECT;
 
-private:
-	QTcpSocket * socket;
 public:
-	Socket(QTcpSocket * socket);
+	Socket(QTcpSocket *socket);
 	void close();
 	qint64 write(const QByteArray &mssg);
+	qint64 readLine(char *data, qint64 maxSize);
 	QByteArray readLine(qint64 maxSize);
-	qint64 readLine(char * data, qint64 maxSize);
+	void append(const QByteArray &data);
+	void readAll();
+	bool endOfRequest();
+	QString getRequest();
 signals:
-	void readyRead(Socket * socket);
+	void readyRead(Socket *socket);
+private:
+	QTcpSocket *socket;
+	QString buffer;
 };

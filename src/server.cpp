@@ -12,14 +12,51 @@ void HttpServer::makeConnection()
 {
 	Socket * socket = new Socket(nextPendingConnection());
 	sockets.append(socket);
-	connect(socket, &Socket::readyRead, this, &HttpServer::readData);
+	connect(socket, &Socket::readyRead, this, &HttpServer::readAllYouCan);
+	connect(this, &HttpServer::allRead, this, &HttpServer::understandData);
+}
+//TODO: Well.. hashysh. files.
+
+void HttpServer::readAllYouCan(Socket *socket)
+{
+	socket->readAll();
+
+	//TODO: if bad data
+
+	if (socket->endOfRequest()) {
+		emit allRead(socket);
+		emit debug("Emitted\n");
+	}
 }
 
-void HttpServer::sendHead(Socket * socket, int size)
+void HttpServer::sendData(Socket * socket, const QString &cmd, const QString &path)
 {
-	QString buffer = "HTTP/1.1 200 OK\r\nServer: Platforma v.01\r\nContent-Length: 623\r\nContent-Type: text/html\r\n\r\n"; //TODO: QString::arg()
-	emit debug(buffer);
+	emit debug("Requested file: ../data" + path + "\n");
+	QFile data;
+	if (path != "/")
+		data.setFileName("../data" + path);
+	else
+		data.setFileName("../data/index.html");
+	if (!(data.open(QIODevice::ReadOnly))) {
+		emit debug("Failed to open requested file\n");
+		sendHead(socket, 0, 400);
+		//TODO: bad request
+	} else {
+		QString buffer = data.readAll();
+		emit debug(buffer + "\n");
+		sendHead(socket, buffer.toLocal8Bit().size(), 200);
+		socket->write(buffer.toLocal8Bit());
+	}
+}
 
+void HttpServer::sendHead(Socket * socket, int size, int statusNo)
+{
+	QString status;
+	if (statusNo / 100 == 2)
+		status = "OK";
+	else
+		status = "ERROR";
+	QString buffer = QString("HTTP/1.1 %1 " + status +"\r\nServer: Platforma v.01\r\nContent-Length: %2\r\nContent-Type: text/html\r\n\r\n").arg(statusNo).arg(size);
 	socket->write(buffer.toLocal8Bit());
 
 	emit debug("My answer:\n");
@@ -27,42 +64,28 @@ void HttpServer::sendHead(Socket * socket, int size)
 	emit debug("Header has been send\n");
 }
 
-//TODO: Well.. hashysh. files.
-
-void HttpServer::readData(Socket * socket)
+void HttpServer::understandData(Socket * socket)
 {
-	const int BUFFER = 256; //TODO CFiend wszystko co buforujesz niech ma rozmiar n * 4 KiB
-	qint64 n;
-	char cmd[16], path[64], vers[16], buffer[BUFFER];
-	QFile * data = new QFile("../data/index.html");
-	data->open(QIODevice::ReadOnly);
-	QString file = data->readAll();
+//TODO CFiend wszystko co buforujesz niech ma rozmiar n * 4 KiB
+	QString cmd, path, vers, crlf;
+	emit debug("Started parsering\n");
+
+	QRegularExpression head("^(?<command>GET|POST) (?<path>\\S+) (?<vrs>HTTP/\\d\\.\\d)(?<crlf>\\r\\n)");
 
 	emit debug("Clients request:");
-	n = socket->readLine(buffer, BUFFER);
-	sscanf(buffer, "%s %s %s", cmd, path, vers); //TODO CFiend QRegularExpression
-	emit debug(buffer);
-	while ((n = socket->readLine(buffer, BUFFER)) > 0) {
-		if (n == 2 && buffer[0] == '\r' && buffer[1] == '\n')
-			break;
-		emit debug(buffer);
-		emit debug ("\n");
-	}
-	emit debug("Check if client is reliable");
-	if (strcmp(cmd, "GET") || (strcmp(vers, "HTTP/1.0") && strcmp(vers, "HTTP/1.1"))) {
-		emit debug("\t\t\t\t\t[FAILED]\n");
-	} else {
-		emit debug("\t\t\t\t\t[OK]\n\n");
-		sendHead(socket, file.size());
-		sendData(socket, path);
-		socket->write(file.toLocal8Bit());
-		emit debug("\t\t\t\t\t[OK]\n\n");
-	}
-}
 
-void HttpServer::sendData(Socket * socket, const QString &path)
-{
-	emit debug("Sending index.html");
+	QRegularExpressionMatch match = head.match(socket->getRequest());
+	if (match.hasMatch()) {
+		emit debug("Match found\n");
+		cmd = match.captured("command");
+		path = match.captured("path");
+		vers = match.captured("vrs");
+		crlf = match.captured("crlf");
+		emit debug(cmd + " " + path + " " + vers + crlf);
+		sendData(socket, cmd, path);
+	} else {
+		emit debug("Match not found\n");
+	}
 }
 
 void HttpServer::closeConnection(Socket * socket)
@@ -89,3 +112,8 @@ void HttpServer::close()
 {
 	server.close();
 }
+/*
+void HttpServer::parser()
+{
+	
+}*/
